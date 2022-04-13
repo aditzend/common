@@ -49,7 +49,7 @@ services:
       - public
 
   voicebot-api:
-    image: alexanderditzend/voicebot-api:1.0.1
+    image: alexanderditzend/voicebot-api:1.0.2
     ports:
       - target: 8656
         published: 3${STACK_CODE-00}56 # REST API tiene que pegarle a este puerto
