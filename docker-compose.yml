@@ -7,23 +7,10 @@ version: '3.8'
 networks:
   private:
   public:
-
-volumes:
-  mongo_data:
-  redis_data:
-  web_server_data:
-  metabase_data:
-  api_mitacd_data:
-  api_botreports_data:
-  api_aconcagua_bank_data:
-  api_analytics_data:
-  api_analytics_data_uploads:
-  pg_data:
-  analytics_uploads:
-  
-configs:
-  pg_init_bsas:
+  bots:
     external: true
+    name: bots-public
+
 
 services:
   concordia-ws:
@@ -47,6 +34,7 @@ services:
     networks:
       - private
       - public
+      - bots
 
   voicebot-api:
     image: alexanderditzend/voicebot-api:1.0.2
@@ -67,6 +55,7 @@ services:
     networks:
       - private
       - public
+      - bots
       
   rabbitmq:
     image: rabbitmq:3-management
