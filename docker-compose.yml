@@ -56,10 +56,6 @@ services:
         protocol: tcp
         mode: host  
     environment:
-      - WEB_SOCKET_PORT=8646
-      - WAIT_TIME_BETWEEN_MESSAGES=${GATEWAY_WAIT_TIME_BETWEEN_MESSAGES-0.00000000001} # segundos
-      - POLLING_INTERVAL=${GATEWAY_POLLING_INTERVAL-500} # milisegundos
-      - MODE=${GATEWAY_MODE-DEBUG}
       - LOG_LEVEL=debug
       - BLUEBIRD_W_FORGOTTEN_RETURN=0 
       - RABBITMQ_HOST=${RABBITMQ_HOST-amqp://rabbitmq:5672}
@@ -67,13 +63,11 @@ services:
       - PRODUCTION_RASA_SERVICE_NAME=${PRODUCTION_RASA_SERVICE_NAME-rasa}
       - NODE_ENV=production
       - BOT_ENV=production
+      - BOT_DEV_URL=http://192.168.43.169:18005
+      - API_PORT=8656
     networks:
       - private
       - public
-
-  
-      
-
       
   rabbitmq:
     image: rabbitmq:3-management
