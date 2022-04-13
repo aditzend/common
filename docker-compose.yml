@@ -1,0 +1,223 @@
+# Servicios comunes para Chatbot 2.2
+# Listo para Traefik
+# REST API en el Gateway
+
+version: '3.8'
+
+networks:
+  private:
+  public:
+
+volumes:
+  mongo_data:
+  redis_data:
+  web_server_data:
+  metabase_data:
+  api_mitacd_data:
+  api_botreports_data:
+  api_aconcagua_bank_data:
+  api_analytics_data:
+  api_analytics_data_uploads:
+  pg_data:
+  analytics_uploads:
+  
+configs:
+  pg_init_bsas:
+    external: true
+
+services:
+
+  mitacd_api:
+    image: alexanderditzend/mitacd-api:1.0.0
+    environment:
+      KNEX_CLIENT: "mssql"
+      KNEX_HOST: "192.168.43.161"
+      KNEX_PORT: "1433"
+      KNEX_USER: "mituser"
+      KNEX_PASSWORD: "mitcall"
+      KNEX_DATABASE: "MitACD"
+      LOG_LEVEL: "debug"
+    ports:
+      - 34000:4000
+    networks:
+      - public
+      - private
+       
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 34181:8080
+    networks:
+      - private
+
+  analytics:
+    image: directus/directus:9.2.2
+    volumes:
+      - analytics_uploads:/directus/uploads
+    ports:
+      - "38060:8055"
+    environment:
+      KEY: "mitcall"
+      SECRET: "mitcall"
+      ADMIN_EMAIL: "mituser@mitrol.net"
+      ADMIN_PASSWORD: "mitcall"
+      DB_CLIENT: "pg"
+      DB_HOST: "pg"
+      DB_PORT: "5432"
+      DB_DATABASE: "analytics"
+      DB_USER: "mituser"
+      DB_PASSWORD: "mitcall"
+      TZ: "UTC"
+    networks:
+      - private
+      
+  pg:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: "mitcall"
+      PG_DATA: "/var/lib/postgresql/data"
+      POSTGRES_USER: "mituser"
+      POSTGRES_DB: "analytics"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    configs:
+      - source: pg_init_bsas
+        target: /docker-entrypoint-initdb.d/init-user-db.sh
+        uid: '101'
+        gid: '101'
+        mode: 0440
+    networks:
+      - private
+      
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "31672:15672"
+      - "35672:5672"
+    networks:
+      - public
+      - private
+      
+       
+  api_aconcagua_bank:
+    image: directus/directus
+    volumes:
+      - api_aconcagua_bank_data:/directus
+    ports:
+      - "38055:8055"
+    environment:
+      KEY: "mitcall"
+      SECRET: "mitcall"
+      ADMIN_EMAIL: "mituser@mitrol.net"
+      ADMIN_PASSWORD: "mitcall"
+      DB_CLIENT: "mssql"
+      DB_HOST: "192.168.43.161"
+      DB_PORT: "1433"
+      DB_DATABASE: "Aconcagua Bank"
+      DB_USER: "mituser"
+      DB_PASSWORD: "mitcall"
+    networks:
+      - public
+   
+      
+  api_analytics:
+    image: directus/directus:9.2.2
+    volumes:
+      - api_analytics_data_uploads:/directus/uploads
+    ports:
+      - "38059:8055"
+    environment:
+      KEY: "mitcall"
+      SECRET: "mitcall"
+      ADMIN_EMAIL: "mituser@mitrol.net"
+      ADMIN_PASSWORD: "mitcall"
+      DB_CLIENT: "mssql"
+      DB_HOST: "192.168.43.161"
+      DB_PORT: "1433"
+      DB_DATABASE: "Analytics"
+      DB_USER: "mituser"
+      DB_PASSWORD: "mitcall"
+      LOG_LEVEL: "debug"
+    networks:
+      - public
+
+  gateway:
+    image: alexanderditzend/gateway:2.3.1
+    ports:
+        #Puerto del WebSocket
+      - target: 8646
+        published: 3${STACK_CODE-00}46 # concordia tiene que estar conectado a este puerto
+        protocol: tcp
+        mode: host
+        #Puerto de la REST API
+      - target: 8656
+        published: 3${STACK_CODE-00}56 # REST API tiene que pegarle a este puerto
+        protocol: tcp
+        mode: host
+    environment:
+      - WEB_SOCKET_PORT=8646
+      - WAIT_TIME_BETWEEN_MESSAGES=${GATEWAY_WAIT_TIME_BETWEEN_MESSAGES-0.00000000001} # segundos
+      - POLLING_INTERVAL=${GATEWAY_POLLING_INTERVAL-500} # milisegundos
+      - MODE=${GATEWAY_MODE-DEBUG}
+      - LOG_LEVEL=debug
+      - BLUEBIRD_W_FORGOTTEN_RETURN=0 
+      - RABBITMQ_HOST=${RABBITMQ_HOST-amqp://rabbitmq:5672}
+      - BOT_WAKE_UP_WORD=${BOT_WAKE_UP_WORD-/start}
+      - PRODUCTION_RASA_SERVICE_NAME=${PRODUCTION_RASA_SERVICE_NAME-rasa}
+      #- NODE_ENV=production
+    networks:
+      - private
+      - public
+
+  mongo:
+    image: mongo:4.4.4
+    deploy:
+      replicas: 1
+    volumes:
+      - mongo_data:/data/db
+    #ports:
+     # - 30017:27017
+    #environment:
+      #MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME-root}
+      #MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD-Mitrol40}
+    networks:
+      - public
+    #entrypoint: ["mongod"]
+    # para correr cuando esten creados los usuarios non root, usar la linea de abajo
+    #entrypoint: ["mongod", "--auth"]
+  
+  mongo-express:
+    image: mongo-express
+    networks:
+      - public
+    ports:
+      - target: 8081
+        published: 3${STACK_CODE-00}81 
+        protocol: tcp
+        mode: host
+    environment:
+      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance" 
+      ME_CONFIG_MONGODB_SERVER: "mongo"
+      ME_CONFIG_BASICAUTH_USERNAME: "root"
+      ME_CONFIG_BASICAUTH_PASSWORD: "Mitrol40"
+      #ME_CONFIG_MONGODB_ADMINUSERNAME: "root"
+      #ME_CONFIG_MONGODB_ADMINPASSWORD: "Mitrol40"
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      
+
+  duckling:
+    image: rasa/duckling:0.1.6.2
+    labels:
+      botfarm: duckling
+    #ports:
+     # - 3${STACK_CODE-00}62:8000
+    networks:
+      - public
+    
+
+
+
+
