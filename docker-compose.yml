@@ -7,9 +7,6 @@ version: '3.8'
 networks:
   private:
   public:
-  bots:
-    external: true
-    name: bots-public
 
 
 services:
@@ -34,7 +31,6 @@ services:
     networks:
       - private
       - public
-      - bots
 
   voicebot-api:
     image: alexanderditzend/voicebot-api:1.0.2
@@ -55,7 +51,6 @@ services:
     networks:
       - private
       - public
-      - bots
       
   rabbitmq:
     image: rabbitmq:3-management
