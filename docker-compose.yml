@@ -64,7 +64,6 @@ services:
       - NODE_ENV=production
       - BOT_ENV=production
       - BOT_DEV_URL=http://192.168.43.169:18005
-      - API_PORT=8656
     networks:
       - private
       - public
