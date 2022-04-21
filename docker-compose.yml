@@ -27,7 +27,7 @@ services:
       - RABBITMQ_HOST=${RABBITMQ_HOST-amqp://rabbitmq:5672}
       - BOT_WAKE_UP_WORD=${BOT_WAKE_UP_WORD-/start}
       - PRODUCTION_RASA_SERVICE_NAME=${PRODUCTION_RASA_SERVICE_NAME-rasa}
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV-development}
     networks:
       - private
       - public
@@ -45,7 +45,7 @@ services:
       - RABBITMQ_HOST=${RABBITMQ_HOST-amqp://rabbitmq:5672}
       - BOT_WAKE_UP_WORD=${BOT_WAKE_UP_WORD-/start}
       - PRODUCTION_RASA_SERVICE_NAME=${PRODUCTION_RASA_SERVICE_NAME-rasa}
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV-development}
       - BOT_ENV=production
       - BOT_DEV_URL=http://192.168.43.169:18005
       - NUMBER_CONDENSING_ENABLED=true
